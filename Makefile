@@ -42,9 +42,12 @@ BOOST_LDFLAG=-L$(BOOST_PATH)/lib -lboost_serialization
 BOOST_FLAGS=$(BOOST_IFLAG) $(BOOST_LDFLAG)
 
 #Checkpoint - Restart with FTI libray
-FTIPATH=$(HOME)/FTI/install
+#FTIPATH=$(HOME)/FTI/install
+FTIPATH=/usr/workspace/trokon/myLibs/fti
 FTI_IFLAG=-I$(FTIPATH)/include 
-FTI_LDFLAG=$(FTIPATH)/lib/libfti.a
+FTI_LDFLAG=$(FTIPATH)/lib64/libfti.a
+#FTI_IFLAG=-I$(FTIPATH)/include 
+#FTI_LDFLAG=$(FTIPATH)/lib/libfti.a
 
 #HDF5 and Silo library to the vizulization part
 # SILO_PATH=$(HOME)/silo-4.10.2
@@ -72,7 +75,7 @@ all: $(LULESH_EXEC)
 
 lulesh2.0: $(OBJECTS2.0)
 	@echo "Linking"
-	$(CXX) $(OBJECTS2.0) $(LDFLAGS) -lm -o $@
+	$(CXX) $(OBJECTS2.0) $(LDFLAGS) -lz -lcrypto -lm -o $@
 
 clean:
 	/bin/rm -f *.o *~ $(OBJECTS) $(LULESH_EXEC)

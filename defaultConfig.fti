@@ -1,7 +1,7 @@
 
 [basic]
 head                           = 0
-node_size                      = 2
+node_size                      = tjl_rpns
 ckpt_dir                       = ./ckpt_files/local
 glbl_dir                       = ./ckpt_files/global
 meta_dir                       = ./ckpt_files/meta
@@ -13,13 +13,13 @@ inline_l2                      = 1
 inline_l3                      = 1
 inline_l4                      = 1
 keep_last_ckpt                 = 0
-group_size                     = 4
+group_size                     = tjl_rpgs
 verbosity                      = 1
 
 
 [restart]
 failure                        = 0
-exec_id                        = 2021-03-25_08-08-10
+exec_id                        = 2020-09-16_15-10-07
 
 
 [injection]
