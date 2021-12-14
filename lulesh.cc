@@ -162,6 +162,8 @@ Additional BSD Notice
 
 #include "lulesh.h"
 
+int printKernel = 0;
+
 //********************
 // Boost Serialization
 //********************
@@ -1150,21 +1152,29 @@ static inline void CalcForceForNodes(Domain& domain)
 {
   Index_t numNode = domain.numNode() ;
 
+  double s_sub_cffn, e_sub_cffn, s_cvffe, e_cvffe;
+
 #if USE_MPI  
   CommRecv(domain, MSG_COMM_SBN, 3,
            domain.sizeX() + 1, domain.sizeY() + 1, domain.sizeZ() + 1,
            true, false) ;
 #endif  
 
+  s_sub_cffn = MPI_Wtime(); //timer
 #pragma omp parallel for firstprivate(numNode)
   for (Index_t i=0; i<numNode; ++i) {
      domain.fx(i) = Real_t(0.0) ;
      domain.fy(i) = Real_t(0.0) ;
      domain.fz(i) = Real_t(0.0) ;
   }
-
+  e_sub_cffn = MPI_Wtime(); //timer
   /* Calcforce calls partial, force, hourq */
+  s_cvffe = MPI_Wtime(); //timer
   CalcVolumeForceForElems(domain) ;
+  e_cvffe = MPI_Wtime(); //timer
+
+  if(printKernel == 1) printf("TJL,sub_cffn,%f\n", e_sub_cffn-s_sub_cffn);
+  if(printKernel == 1)  printf("TJL,cvffe,%f\n", e_cvffe-s_cvffe);
 
 #if USE_MPI  
   Domain_member fieldData[3] ;
@@ -1275,9 +1285,14 @@ void LagrangeNodal(Domain& domain)
    const Real_t delt = domain.deltatime() ;
    Real_t u_cut = domain.u_cut() ;
 
+   double s_cffn, e_cffn, s_cafn, e_cafn, s_aabcfn, e_aabcfn, s_cvfn, e_cvfn, s_cpfn, e_cpfn;
+
   /* time of boundary condition evaluation is beginning of step for force and
    * acceleration boundary conditions. */
+  s_cffn = MPI_Wtime(); //timer
   CalcForceForNodes(domain);
+  e_cffn = MPI_Wtime(); //timer
+  if(printKernel== 1) printf("TJL,cffn,%f\n", e_cffn-s_cffn);
 
 #if USE_MPI  
 #ifdef SEDOV_SYNC_POS_VEL_EARLY
@@ -1287,13 +1302,25 @@ void LagrangeNodal(Domain& domain)
 #endif
 #endif
    
+   s_cafn = MPI_Wtime(); //timer
    CalcAccelerationForNodes(domain, domain.numNode());
+   e_cafn = MPI_Wtime(); //timer
+   if(printKernel == 1) printf("TJL,cafn,   %f\n", e_cafn-s_cafn);
    
+   s_aabcfn = MPI_Wtime(); //timer
    ApplyAccelerationBoundaryConditionsForNodes(domain);
+   e_aabcfn = MPI_Wtime(); //timer
+   if(printKernel == 1) printf("TJL,aabcfn,   %f\n", e_aabcfn-s_aabcfn);
 
+   s_cvfn = MPI_Wtime(); //timer
    CalcVelocityForNodes( domain, delt, u_cut, domain.numNode()) ;
+   e_cvfn = MPI_Wtime(); //timer
+   if(printKernel == 1) printf("TJL,cvfn,   %f\n", e_cvfn-s_cvfn);
 
+   s_cpfn = MPI_Wtime(); //timer
    CalcPositionForNodes( domain, delt, domain.numNode() );
+   e_cpfn = MPI_Wtime(); //timer
+   if(printKernel == 1) printf("TJL,cpfn,   %f\n", e_cpfn-s_cpfn);
 #if USE_MPI
 #ifdef SEDOV_SYNC_POS_VEL_EARLY
   fieldData[0] = &Domain::x ;
@@ -1617,6 +1644,8 @@ void CalcKinematicsForElems( Domain &domain, Real_t *vnew,
 static inline
 void CalcLagrangeElements(Domain& domain, Real_t* vnew)
 {
+   double s_ckfe, e_ckfe, s_sub_cle, e_sub_cle;
+
    Index_t numElem = domain.numElem() ;
    if (numElem > 0) {
       const Real_t deltatime = domain.deltatime() ;
@@ -1624,8 +1653,11 @@ void CalcLagrangeElements(Domain& domain, Real_t* vnew)
       domain.AllocateStrains(numElem);
 
       CalcKinematicsForElems(domain, vnew, deltatime, numElem) ;
+      e_ckfe = MPI_Wtime(); //timer
+      if(printKernel == 1) printf("TJL,ckfe,%f\n", e_ckfe-s_ckfe);
 
       // element loop to do some stuff not included in the elemlib function.
+      s_sub_cle = MPI_Wtime(); //timer
 #pragma omp parallel for firstprivate(numElem)
       for ( Index_t k=0 ; k<numElem ; ++k )
       {
@@ -1649,6 +1681,8 @@ void CalcLagrangeElements(Domain& domain, Real_t* vnew)
 #endif
         }
       }
+      e_sub_cle = MPI_Wtime(); //timer
+      if(printKernel == 1) printf("TJL,sub_cle,   %f\n", e_sub_cle-s_sub_cle);
       domain.DeallocateStrains();
    }
 }
@@ -1997,6 +2031,8 @@ void CalcQForElems(Domain& domain, Real_t vnew[])
 
    Index_t numElem = domain.numElem() ;
 
+   double s_cmqgfe, e_cmqgfe, s_cmqfe, e_cmqfe, s_sub_cqfe, e_sub_cqfe;
+
    if (numElem != 0) {
       Int_t allElem = numElem +  /* local elem */
             2*domain.sizeX()*domain.sizeY() + /* plane ghosts */
@@ -2012,7 +2048,10 @@ void CalcQForElems(Domain& domain, Real_t vnew[])
 #endif      
 
       /* Calculate velocity gradients */
+      s_cmqgfe = MPI_Wtime(); //timer
       CalcMonotonicQGradientsForElems(domain, vnew);
+      e_cmqgfe = MPI_Wtime(); //timer
+      if(printKernel == 1) printf("TJL,cmqgfe,   %f\n", e_cmqgfe-s_cmqgfe);
 
 #if USE_MPI      
       Domain_member fieldData[3] ;
@@ -2031,12 +2070,16 @@ void CalcQForElems(Domain& domain, Real_t vnew[])
       CommMonoQ(domain) ;
 #endif      
 
+      s_cmqfe = MPI_Wtime(); //timer
       CalcMonotonicQForElems(domain, vnew) ;
+      e_cmqfe = MPI_Wtime(); //timer
+      if(printKernel == 1) printf("TJL,cmqfe,   %f\n", e_cmqfe-s_cmqfe);
 
       // Free up memory
       domain.DeallocateGradients();
 
       /* Don't allow excessive artificial viscosity */
+      s_sub_cqfe = MPI_Wtime(); //timer
       Index_t idx = -1; 
       for (Index_t i=0; i<numElem; ++i) {
          if ( domain.q(i) > domain.qstop() ) {
@@ -2044,6 +2087,9 @@ void CalcQForElems(Domain& domain, Real_t vnew[])
             break ;
          }
       }
+      e_sub_cqfe = MPI_Wtime(); //timer
+      if(printKernel == 1) printf("sub_cqfe,   %f,\n", e_sub_cqfe-s_sub_cqfe);
+
 
       if(idx >= 0) {
 #if USE_MPI         
@@ -2472,15 +2518,26 @@ void LagrangeElements(Domain& domain, Index_t numElem)
 {
   Real_t *vnew = Allocate<Real_t>(numElem) ;  /* new relative vol -- temp */
 
+  double s_cqfe, e_cqfe, s_ampfe, e_ampfe, s_uvfe, e_uvfe;
+
   CalcLagrangeElements(domain, vnew) ;
 
   /* Calculate Q.  (Monotonic q option requires communication) */
+  s_cqfe = MPI_Wtime(); //timer
   CalcQForElems(domain, vnew) ;
+  e_cqfe = MPI_Wtime(); //timer
+  if(printKernel == 1) printf("TJL,cqfe,   %f\n", e_cqfe-s_cqfe);
 
+  s_cqfe = MPI_Wtime(); //timer
   ApplyMaterialPropertiesForElems(domain, vnew) ;
+  e_cqfe = MPI_Wtime(); //timer
+  if(printKernel == 1) printf("TJL,ampfe,   %f\n", e_ampfe-s_ampfe);
 
+  s_uvfe = MPI_Wtime(); //timer
   UpdateVolumesForElems(domain, vnew,
                         domain.v_cut(), numElem) ;
+  e_uvfe = MPI_Wtime(); //timer
+  if(printKernel == 1) printf("TJL,uvfe,   %f\n", e_uvfe-s_uvfe);
 
   Release(&vnew);
 }
@@ -2660,6 +2717,8 @@ void LagrangeLeapFrog(Domain& domain)
    Domain_member fieldData[6] ;
 #endif
 
+   double s_ctcfe, e_ctcfe;
+
    /* calculate nodal forces, accelerations, velocities, positions, with
     * applied boundary conditions and slide surface considerations */
    LagrangeNodal(domain);
@@ -2691,7 +2750,11 @@ void LagrangeLeapFrog(Domain& domain)
 #endif
 #endif   
 
+   s_ctcfe = MPI_Wtime(); //timer
    CalcTimeConstraintsForElems(domain);
+   e_ctcfe = MPI_Wtime(); //timer
+   if(printKernel == 1) printf("TJL,ctcfe,   %f\n", e_ctcfe-s_ctcfe);
+
 
 #if USE_MPI   
 #ifdef SEDOV_SYNC_POS_VEL_LATE
@@ -2728,7 +2791,7 @@ int main(int argc, char *argv[])
 
    MPI_Init(&argc, &argv) ;
    char config_fti[] = "config.fti";
-   FTI_Init(config_fti, MPI_COMM_WORLD);
+   int ftiInitRes = FTI_Init(config_fti, MPI_COMM_WORLD);
    MPI_Comm_size(FTI_COMM_WORLD, &numRanks) ;
    MPI_Comm_rank(FTI_COMM_WORLD, &myRank) ;
 #else
@@ -2736,18 +2799,23 @@ int main(int argc, char *argv[])
    myRank = 0;
 #endif   
 
+   double s_timeStep, e_timeStep, s_backupTime, e_backupTime;
+
    /* Set defaults that can be overridden by command line opts */
    opts.its = 9999999;
+   opts.its = 2000;
    opts.nx  = 30;
    opts.numReg = 11;
    opts.numFiles = (int)(numRanks+10)/9;
    opts.showProg = 0;
+   opts.showProg = 1;
    opts.quiet = 0;
    opts.viz = 0;
    opts.balance = 1;
    opts.cost = 1;
 
    ParseCommandLineOptions(argc, argv, myRank, &opts);
+   printf("FTI_Init: %d\n", ftiInitRes);
 
    if ((myRank == 0) && (opts.quiet == 0)) {
       printf("Running problem size %d^3 per domain until completion\n", opts.nx);
@@ -2765,13 +2833,16 @@ int main(int argc, char *argv[])
       printf("See help (-h) for more options\n\n");
    }
 
+
    // Set up the mesh and decompose. Assumes regular cubes for now
    Int_t col, row, plane, side;
    InitMeshDecomp(numRanks, myRank, &col, &row, &plane, &side);
 
+
    // Build the main data structure and initialize it
    locDom = new Domain(numRanks, col, row, plane, opts.nx,
                        side, opts.numReg, opts.balance, opts.cost) ;
+
 
 
 #if USE_MPI   
@@ -2790,6 +2861,7 @@ int main(int argc, char *argv[])
    MPI_Barrier(FTI_COMM_WORLD);
 #endif   
    
+
    // BEGIN timestep to solution */
 #if USE_MPI   
    double start = MPI_Wtime();
@@ -2815,6 +2887,7 @@ int main(int argc, char *argv[])
   buffer_size += 1000000; //Add this to handle the dynamic change size of the buffer 
   buffer_locDom_ser = new char [buffer_size];
   strcpy(buffer_locDom_ser, tmp.c_str());
+
 
   //Checkpoint informations
   int id = 1;
@@ -2856,12 +2929,19 @@ int main(int argc, char *argv[])
     locDom = tmp;
   }
 
+
+
 //---------------------------------------------------------------------------------------------------------------------//
    if (!myRank)
      std::cout << "-- Start of the main loop --\n";
+   if (myRank == 0) std::cout << "TJL,kernel,rank,cycleNum,time";
    while((locDom->time() < locDom->stoptime()) && (locDom->cycle() < opts.its)) {
+      
+      s_timeStep = MPI_Wtime();
       TimeIncrement(*locDom) ;
       LagrangeLeapFrog(*locDom) ;
+      e_timeStep = MPI_Wtime();
+      printf("TJL,timeStep,%d,%d,%f\n",myRank,locDom->cycle(),e_timeStep-s_timeStep);
 
       if ((opts.showProg != 0) && (opts.quiet == 0) && (myRank == 0)) {
          printf("cycle = %d, time = %e, dt=%e\n",
@@ -2870,6 +2950,7 @@ int main(int argc, char *argv[])
 
       //Checkpoint at ITER_CKPT
       if((locDom->cycle()%ITER_CKPT) == 0 && locDom->cycle() != opts.its){
+        s_backupTime = MPI_Wtime();
 
         //Serialization of locDom in std::stringstream
         locDom_ser.str("");
@@ -2880,12 +2961,20 @@ int main(int argc, char *argv[])
         buffer_locDom_ser[0] = '\0'; //reset the buffer
         strcpy(buffer_locDom_ser, tmp.c_str());
 
+	double chkptStrt, chkptStop, chkptTime;
+        chkptStrt = MPI_Wtime();
         res = FTI_Checkpoint(id, level);
+        chkptStop = MPI_Wtime();
+        chkptTime = chkptStop - chkptStrt;
+        //printf("Checkpoint Time: %f\n", chkptTime);
+        printf("TJL,checkpointL%d,%d,%d,%f\n", level,myRank,locDom->cycle(),chkptTime);
         // sleep(3); //for the tests
         if(res != 0){
           id++;
           level= (level%4)+1;
         }
+      e_backupTime = MPI_Wtime();
+      //printf("TJL,backupTime, %f\n", e_backupTime-s_backupTime);
       }
    }
 
