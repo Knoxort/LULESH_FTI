@@ -176,7 +176,8 @@ std::stringstream locDom_ser;
 //*************************
 // FTI Checkpoint - Restart
 //*************************
-#include <fti.h> 
+//#include <fti.h> 
+#include "/blue/lam/johnson2319/fti/include/fti.h" 
 #define ITER_CKPT 100
 
 /*********************************/

@@ -36,15 +36,23 @@ OBJECTS2.0 = $(SOURCES2.0:.cc=.o)
 #Change the paths in *_PATH variables
 
 #Serialization with Boost library
-BOOST_PATH=$(HOME)/boost_1_64_0/install
-BOOST_IFLAG=-I$(BOOST_PATH)/include
-BOOST_LDFLAG=-L$(BOOST_PATH)/lib -lboost_serialization
+#BOOST_PATH=$(HOME)/boost_1_64_0/install
+#BOOST_IFLAG=-I$(BOOST_PATH)/include
+#BOOST_IFLAG=-I$(HPC_BOOST_DIR)/include
+BOOST_IFLAG=-I$(HPC_BOOST_INC)
+#BOOST_LDFLAG=-L$(BOOST_PATH)/lib -lboost_serialization
+#BOOST_LDFLAG=-L$(HPC_BOOST_DIR)/lib -lboost_serialization
+BOOST_LDFLAG=-L$(HPC_BOOST_LIB) -lboost_serialization
 BOOST_FLAGS=$(BOOST_IFLAG) $(BOOST_LDFLAG)
 
 #Checkpoint - Restart with FTI libray
-FTIPATH=$(HOME)/FTI/install
+#FTIPATH=$(HOME)/FTI/install
+FTIPATH=/blue/lam/johnson2319/fti/install
 FTI_IFLAG=-I$(FTIPATH)/include 
-FTI_LDFLAG=$(FTIPATH)/lib/libfti.a
+#FTI_IFLAG=-I/blue/lam/johnson2319/fti/include 
+#FTI_LDFLAG=$(FTIPATH)/lib/libfti.a
+FTI_LDFLAG=$(FTIPATH)/lib64/libfti.a
+#FTIPATH=/home/johnson2319/local/lib/lib64/libfti.a
 
 #HDF5 and Silo library to the vizulization part
 # SILO_PATH=$(HOME)/silo-4.10.2
@@ -58,7 +66,7 @@ FTI_LDFLAG=$(FTIPATH)/lib/libfti.a
 
 #Default build suggestions with OpenMP with checkpoint/restart
 CXXFLAGS = -g -O3 -fopenmp -I. -Wall $(BOOST_IFLAG) $(FTI_IFLAG)
-LDFLAGS = -g -O3 -fopenmp $(BOOST_LDFLAG) $(FTI_LDFLAG)
+LDFLAGS = -g -O3 -fopenmp $(BOOST_LDFLAG) $(FTI_LDFLAG) 
 
 #Flags for using checkpoint/restart and to get vizulization
 # CXXFLAGS = -g -O3 -fopenmp -DVIZ_MESH $(SILO_IFLAG) $(BOOST_IFLAG) $(FTI_IFLAG) -Wall -Wno-pragmas 
@@ -72,7 +80,7 @@ all: $(LULESH_EXEC)
 
 lulesh2.0: $(OBJECTS2.0)
 	@echo "Linking"
-	$(CXX) $(OBJECTS2.0) $(LDFLAGS) -lm -o $@
+	$(CXX) $(OBJECTS2.0) $(LDFLAGS) -lz -lcrypto -lm -o $@
 
 clean:
 	/bin/rm -f *.o *~ $(OBJECTS) $(LULESH_EXEC)

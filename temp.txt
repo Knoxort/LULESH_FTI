@@ -1,0 +1,52 @@
+[ [32mFTI  Information[0m ] : Reading FTI configuration file (config.fti)... 
+[ [38;5;202mFTI Warning 000002[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000002[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000006[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000006[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [32mFTI  Information[0m ] : The execution ID is: 2021-12-10_15-05-49 
+[ [38;5;202mFTI Warning 000000[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000000[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000001[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000001[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000003[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000003[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000004[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000004[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000005[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000005[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [38;5;202mFTI Warning 000007[0m ] : Variable 'Basic:max_sync_intv' is not set. Set to default (512 iterations). 
+[ [38;5;202mFTI Warning 000007[0m ] : Variable 'Basic:ckpt_io' is not set. Set to default (POSIX). 
+[ [32mFTI  Information[0m ] : FTI has been initialized. 
+Running problem size 10^3 per domain until completion
+Num processors: 8
+Num threads: 16
+Total number of elements: 8000
+
+To run other sizes, use -s <integer>.
+To run a fixed number of iterations, use -i <integer>.
+To run a more or less balanced region set, use -b <integer>.
+To change the relative costs of regions, use -c <integer>.
+To print out progress, use -p
+To write an output file for VisIt, use -v
+See help (-h) for more options
+
+[ [32mFTI  Information[0m ] : Variable ID 0 to protect (Stored in CPU). Current ckpt. size per rank is 0.00MB. 
+[ [32mFTI  Information[0m ] : Variable ID 1 to protect (Stored in CPU). Current ckpt. size per rank is 0.00MB. 
+[ [32mFTI  Information[0m ] : Variable ID 2 to protect (Stored in CPU). Current ckpt. size per rank is 1.85MB. 
+-- Start of the main loop --
+Run completed:  
+   Problem size        =  10 
+   MPI tasks           =  8 
+   Iteration count     =  10 
+   Final Origin Energy = 2.077411e+06 
+   Testing Plane 0 of Energy Array on rank 0:
+        MaxAbsDiff   = 1.018634e-10
+        TotalAbsDiff = 1.025184e-10
+        MaxRelDiff   = 9.474713e-14
+
+
+Elapsed time         =       3.05 (s)
+Grind time (us/z/c)  =  305.29914 (per dom)  ( 38.162393 overall)
+FOM                  =  26.203808 (z/s)
+
+[ [32mFTI  Information[0m ] : FTI has been finalized. 
